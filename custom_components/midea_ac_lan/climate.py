@@ -50,7 +50,8 @@ from midealocal.devices.cf import MideaCFDevice
 from midealocal.devices.fb import DeviceAttributes as FBAttributes
 from midealocal.devices.fb import MideaFBDevice
 
-from .const import DEVICES, DOMAIN, FanSpeed
+from .const import DEVICES, DOMAIN, FOLLOW_ME_ENTITIES, FanSpeed
+from .follow_me import get_follow_me_external_temperature
 from .midea_devices import MIDEA_DEVICES
 from .midea_entity import MideaEntity
 
@@ -266,6 +267,7 @@ class MideaACClimate(MideaClimate):
     ) -> None:
         """Midea AC Climate entity init."""
         super().__init__(device, entity_key)
+        self._config_entry = config_entry
         self._attr_hvac_modes = [
             HVACMode.OFF,
             HVACMode.AUTO,
@@ -302,6 +304,25 @@ class MideaACClimate(MideaClimate):
         self._indoor_humidity_enabled = (
             "sensors" in config_entry.options
             and "indoor_humidity" in config_entry.options["sensors"]
+        )
+
+    async def async_added_to_hass(self) -> None:
+        """Register entity for Follow Me display refresh."""
+        await super().async_added_to_hass()
+        self.hass.data.setdefault(DOMAIN, {}).setdefault(FOLLOW_ME_ENTITIES, {}).setdefault(
+            self._device.device_id,
+            {},
+        )["climate"] = self
+
+    @property
+    def current_temperature(self) -> float | None:
+        """Midea AC Climate current temperature."""
+        external = get_follow_me_external_temperature(self.hass, self._config_entry)
+        if external is not None:
+            return external
+        return cast(
+            "float | None",
+            self._device.get_attribute(ACAttributes.indoor_temperature),
         )
 
     @property

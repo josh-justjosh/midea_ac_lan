@@ -44,6 +44,7 @@ from .const import (
     DOMAIN,
     EXTRA_SWITCH,
 )
+from .follow_me import async_reload_follow_me, async_setup_follow_me, async_unload_follow_me
 from .midea_devices import MIDEA_DEVICES
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,6 +75,7 @@ async def update_listener(hass: HomeAssistant, config_entry: ConfigEntry) -> Non
             dev.set_ip_address(ip_address)
         if refresh_interval is not None:
             dev.set_refresh_interval(refresh_interval)
+        await async_reload_follow_me(hass, config_entry)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:  # noqa: ARG001
@@ -248,6 +250,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         if DEVICES not in hass.data[DOMAIN]:
             hass.data[DOMAIN][DEVICES] = {}
         hass.data[DOMAIN][DEVICES][device_id] = device
+        await async_setup_follow_me(hass, config_entry, device)
         # Forward the setup of an entry to all platforms
         await hass.config_entries.async_forward_entry_setups(config_entry, ALL_PLATFORM)
         # Listener `update_listener` is
@@ -270,6 +273,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     if device_type == CONF_ACCOUNT:
         return True
     device_id = config_entry.data.get(CONF_DEVICE_ID)
+    await async_unload_follow_me(hass, config_entry)
     if device_id is not None:
         dm = hass.data[DOMAIN][DEVICES].get(device_id)
         if dm is not None:

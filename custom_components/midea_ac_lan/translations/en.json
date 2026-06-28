@@ -844,7 +844,10 @@
           "refresh_interval": "Refresh interval (0 means not refreshing actively)",
           "sensors": "Extra sensors",
           "switches": "Extra controls",
-          "customize": "Customize"
+          "customize": "Customize",
+          "follow_me_enabled": "Enable Follow Me (external temperature)",
+          "external_temp_sensor": "External temperature sensor",
+          "follow_me_interval": "Follow Me update interval (seconds)"
         },
         "title": "Configure"
       }

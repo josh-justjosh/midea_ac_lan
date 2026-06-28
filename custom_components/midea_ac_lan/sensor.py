@@ -12,8 +12,10 @@ from homeassistant.const import CONF_DEVICE_ID, CONF_SENSORS, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
+from midealocal.device import MideaDevice
 
-from .const import DEVICES, DOMAIN
+from .const import DEVICES, DOMAIN, FOLLOW_ME_ENTITIES
+from .follow_me import get_follow_me_external_temperature
 from .midea_devices import MIDEA_DEVICES
 from .midea_entity import MideaEntity
 
@@ -33,7 +35,7 @@ async def async_setup_entry(
         MIDEA_DEVICES[device.device_type]["entities"],
     ).items():
         if config["type"] == Platform.SENSOR and entity_key in extra_sensors:
-            sensor = MideaSensor(device, entity_key)
+            sensor = MideaSensor(device, entity_key, config_entry)
             sensors.append(sensor)
     async_add_entities(sensors)
 
@@ -41,9 +43,37 @@ async def async_setup_entry(
 class MideaSensor(MideaEntity, SensorEntity):
     """Represent a Midea  sensor."""
 
+    def __init__(
+        self,
+        device: MideaDevice,
+        entity_key: str,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize Midea sensor."""
+        super().__init__(device, entity_key)
+        self._config_entry = config_entry
+
+    async def async_added_to_hass(self) -> None:
+        """Register indoor temperature sensor for Follow Me display refresh."""
+        await super().async_added_to_hass()
+        if self._entity_key == "indoor_temperature":
+            self.hass.data.setdefault(DOMAIN, {}).setdefault(
+                FOLLOW_ME_ENTITIES,
+                {},
+            ).setdefault(self._device.device_id, {})[
+                "indoor_temperature"
+            ] = self
+
     @property
     def native_value(self) -> StateType:
         """Return entity value."""
+        if self._entity_key == "indoor_temperature":
+            external = get_follow_me_external_temperature(
+                self.hass,
+                self._config_entry,
+            )
+            if external is not None:
+                return external
         return cast("StateType", self._device.get_attribute(self._entity_key))
 
     @property

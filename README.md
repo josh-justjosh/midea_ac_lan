@@ -188,6 +188,26 @@ Example
 { "refresh_interval": 15, "fan_speed": 100 }
 ```
 
+### 7.5 Follow Me (external temperature) — fork feature
+
+For **air conditioners only**, this fork can send an external Home Assistant temperature sensor to the unit over LAN using reverse-engineered Follow Me frames ([details](https://github.com/mill1000/midea-ac-py/issues/277)).
+
+1. Open **Settings → Devices & Services → Midea AC LAN → your AC → Configure**
+2. Enable **Follow Me (external temperature)**
+3. Select a temperature sensor entity
+4. Set update interval (60–180 s, default 120)
+
+When enabled, `climate.*` and `sensor.*_indoor_temperature` show the external sensor value. The AC receives periodic temperature reports while powered on, plus 5 minutes after turn-off.
+
+**Limitations (experimental):**
+
+- Device-specific — may not work on all models
+- Integer °C only (values are rounded)
+- Must re-send periodically; the unit reverts after ~3–5 min without updates
+- Not supported upstream; fork-only feature
+
+**Bedroom example:** `sensor.bedroom_multi_sensor_air_temperature` → Bedroom AC (`00000Q19`).
+
 ## 8. Debug and Test
 
 please refer to [Debug and Test](doc/debug.md)

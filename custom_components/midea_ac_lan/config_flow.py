@@ -44,6 +44,7 @@ from homeassistant.const import (
     MINOR_VERSION,
 )
 from homeassistant.core import callback
+from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.json import save_json
 from homeassistant.util.json import load_json
@@ -53,7 +54,7 @@ from midealocal.cloud import (
     MideaCloud,
     get_midea_cloud,
 )
-from midealocal.device import AuthException, MideaDevice, ProtocolVersion
+from midealocal.device import AuthException, DeviceType, MideaDevice, ProtocolVersion
 from midealocal.discover import discover
 from midealocal.exceptions import SocketException
 
@@ -69,11 +70,15 @@ else:
 
 from .const import (
     CONF_ACCOUNT,
+    CONF_EXTERNAL_TEMP_SENSOR,
+    CONF_FOLLOW_ME_ENABLED,
+    CONF_FOLLOW_ME_INTERVAL,
     CONF_KEY,
     CONF_MODEL,
     CONF_REFRESH_INTERVAL,
     CONF_SERVER,
     CONF_SUBTYPE,
+    DEFAULT_FOLLOW_ME_INTERVAL,
     DOMAIN,
     EXTRA_CONTROL,
     EXTRA_SENSOR,
@@ -962,6 +967,15 @@ class MideaLanOptionsFlowHandler(OptionsFlow):
             & set(self._config_entry.options.get(CONF_SWITCHES, [])),
         )
         customize = self._config_entry.options.get(CONF_CUSTOMIZE, "")
+        follow_me_enabled = self._config_entry.options.get(CONF_FOLLOW_ME_ENABLED, False)
+        external_temp_sensor = self._config_entry.options.get(
+            CONF_EXTERNAL_TEMP_SENSOR,
+            "",
+        )
+        follow_me_interval = self._config_entry.options.get(
+            CONF_FOLLOW_ME_INTERVAL,
+            DEFAULT_FOLLOW_ME_INTERVAL,
+        )
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_IP_ADDRESS, default=ip_address): str,
@@ -994,5 +1008,27 @@ class MideaLanOptionsFlowHandler(OptionsFlow):
                 ): str,
             },
         )
+        if self._device_type == DeviceType.AC:
+            data_schema = data_schema.extend(
+                {
+                    vol.Optional(
+                        CONF_FOLLOW_ME_ENABLED,
+                        default=follow_me_enabled,
+                    ): bool,
+                    vol.Optional(
+                        CONF_EXTERNAL_TEMP_SENSOR,
+                        default=external_temp_sensor or None,
+                    ): selector.EntitySelector(
+                        selector.EntitySelectorConfig(
+                            domain=["sensor"],
+                            device_class=["temperature"],
+                        ),
+                    ),
+                    vol.Optional(
+                        CONF_FOLLOW_ME_INTERVAL,
+                        default=follow_me_interval,
+                    ): vol.All(vol.Coerce(int), vol.Range(min=60, max=180)),
+                },
+            )
 
         return self.async_show_form(step_id="init", data_schema=data_schema)

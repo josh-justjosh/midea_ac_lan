@@ -1,14 +1,14 @@
 {
   "domain": "midea_ac_lan",
   "name": "Midea AC LAN",
-  "codeowners": ["@wuwentao", "@rokam", "@chemelli74", "@Necroneco"],
+  "codeowners": ["@josh-justjosh"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/wuwentao/midea_ac_lan#readme",
+  "documentation": "https://github.com/josh-justjosh/midea_ac_lan#readme",
   "integration_type": "device",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/wuwentao/midea_ac_lan/issues",
+  "issue_tracker": "https://github.com/josh-justjosh/midea_ac_lan/issues",
   "loggers": ["midealocal"],
-  "requirements": ["midea-local==6.8.0"],
-  "version": "0.6.12"
+  "requirements": ["midea-local@file:///config/deps/midea-local"],
+  "version": "0.6.13-josh.1"
 }
